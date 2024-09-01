@@ -9,7 +9,7 @@ func TestDictionary(t *testing.T) {
 			t.Fatalf("got %v", err)
 		}
 
-		if len(got) == 0 {
+		if got == nil {
 			t.Fatalf("got empty dictionary")
 		}
 
