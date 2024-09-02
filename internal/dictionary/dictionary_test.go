@@ -32,7 +32,7 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("Search non existing word", func(t *testing.T) {
-		given := "walyta"
+		given := "Yello"
 		got := dictionary.Search(given)
 		want := false
 

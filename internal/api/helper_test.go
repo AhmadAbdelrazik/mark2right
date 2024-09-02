@@ -32,3 +32,10 @@ func AssertBool(t testing.TB, got, want bool) {
 		t.Fatalf(`got "%v", want "%v"`, got, want)
 	}
 }
+
+func AssertEquality(t testing.TB, got, want any) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}

@@ -1,12 +1,10 @@
 package api
 
 import (
-	"AhmadAbdelrazik/mark2right/internal/dictionary"
-
 	"strings"
 )
 
-func CheckText(given string, d *dictionary.Dictionary) []string {
+func (a *Application) CheckText(given string) []string {
 	// Get each word out
 	words := strings.Split(given, " ")
 
@@ -21,15 +19,13 @@ func CheckText(given string, d *dictionary.Dictionary) []string {
 
 	badWords := []string{}
 
-	regexp, _ := CompileRegex()
-
 	for _, w := range words {
 		if isAlphaNum(w) {
-			if !d.Search(w) {
+			if !a.Dictionary.Search(w) {
 				badWords = append(badWords, w)
 			}
 		} else {
-			if CheckRegex(regexp, w) {
+			if CheckRegex(a.Regex, w) {
 				continue
 			} else {
 				badWords = append(badWords, w)
