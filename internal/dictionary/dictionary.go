@@ -9,10 +9,10 @@ import (
 )
 
 //go:embed words.txt
-var words []byte
+var words string
 
 //go:embed names.txt
-var names []byte
+var names string
 
 type Dictionary struct {
 	words []string
