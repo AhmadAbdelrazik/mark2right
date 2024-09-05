@@ -23,6 +23,22 @@ type Checker struct {
 	names []string
 }
 
+func NewChecker() ILanguageChecker {
+	checker := &Checker{}
+	checker.words = strings.Split(strings.ToLower(words), "\n")
+	checker.names = strings.Split(strings.ToLower(names), "\n")
+
+	sort.Slice(checker.words, func(i, j int) bool {
+		return checker.words[i] < checker.words[j]
+	})
+
+	sort.Slice(checker.names, func(i, j int) bool {
+		return checker.words[i] < checker.words[j]
+	})
+
+	return checker
+}
+
 func (c *Checker) CheckSpelling(input string) []string {
 	// Get each word out
 	words := strings.Split(input, " ")
@@ -48,22 +64,6 @@ func (c *Checker) CheckSpelling(input string) []string {
 		}
 	}
 	return badWords
-}
-
-func NewChecker() ILanguageChecker {
-	checker := &Checker{}
-	checker.words = strings.Split(strings.ToLower(words), "\n")
-	checker.names = strings.Split(strings.ToLower(names), "\n")
-
-	sort.Slice(checker.words, func(i, j int) bool {
-		return checker.words[i] < checker.words[j]
-	})
-
-	sort.Slice(checker.names, func(i, j int) bool {
-		return checker.words[i] < checker.words[j]
-	})
-
-	return checker
 }
 
 func (c *Checker) search(word string) bool {

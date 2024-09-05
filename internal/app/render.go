@@ -6,27 +6,6 @@ import (
 	"strings"
 )
 
-// Rendering interface, it takes the string that should be rendered and
-// returns a rendered string
-type IRender interface {
-	Render(string) string
-}
-
-// Template
-// type Renderer struct {
-// 	Regex *regexp.Regexp
-// }
-//
-// func (r *Renderer) Render(input string) string {
-// 	if !r.Regex.MatchString(input) {
-// 		return input
-// 	}
-//
-// 	// Implement the renderer here
-//
-// 	return ""
-// }
-
 type HeaderRenderer struct {
 	Regex *regexp.Regexp
 }
@@ -54,4 +33,24 @@ func (r *HeaderRenderer) Render(input string) string {
 	output := fmt.Sprintf("<h%d>%s</h%d>", hashes, strings.Join(inputs[1:], " "), hashes)
 
 	return output
+}
+
+type FontRenderer struct {
+	Regex *regexp.Regexp
+}
+
+func NewFontRenderer() (IRender, error) {
+	font := &FontRenderer{}
+
+	regex, err := regexp.Compile("")
+	if err != nil {
+		return nil, err
+	}
+	font.Regex = regex
+
+	return font, nil
+}
+
+func (r *FontRenderer) Render(input string) string {
+	return ""
 }
