@@ -34,7 +34,7 @@ func TestHeader(t *testing.T) {
 			t.Run(fmt.Sprintf("%d hashtags", i+1), func(t *testing.T) {
 				got := header.Render(test)
 				if got != want[i] {
-					t.Fatalf("got %q, want %q", got, want)
+					t.Fatalf("got %q, want %q", got, want[i])
 				}
 			})
 		}
@@ -63,10 +63,153 @@ func TestHeader(t *testing.T) {
 			t.Run(test, func(t *testing.T) {
 				got := header.Render(test)
 				if got != want[i] {
-					t.Fatalf("got %q, want %q", got, want)
+					t.Fatalf("got %q, want %q", got, want[i])
 				}
 			})
 		}
 
 	})
+}
+
+func TestFont(t *testing.T) {
+	font, err := app.NewFontRenderer()
+	if err != nil {
+		t.Fatalf("new font renderer fail, %v", err)
+	}
+
+	t.Run("1 star", func(t *testing.T) {
+		given := []string{
+			`*Hi*`,
+			`*i*`,
+			`My Name is *Ahmad*`,
+			`I am an* Egyptian Student*`,
+			`****`,
+		}
+
+		want := []string{
+			`<i>Hi</i>`,
+			`<i>i</i>`,
+			`My Name is <i>Ahmad</i>`,
+			`I am an* Egyptian Student*`,
+			`****`,
+		}
+
+		for i, test := range given {
+			t.Run(test, func(t *testing.T) {
+				got := font.Render(test)
+				AssertStringEquality(t, got, want[i])
+			})
+		}
+
+	})
+
+	t.Run("2 stars", func(t *testing.T) {
+		given := []string{
+			`**Hi**`,
+			`**i**`,
+			`My Name is **Ahmad**`,
+			`I am an** Egyptian Student**`,
+			`****`,
+		}
+
+		want := []string{
+			`<b>Hi</b>`,
+			`<b>i</b>`,
+			`My Name is <b>Ahmad</b>`,
+			`I am an** Egyptian Student**`,
+			`****`,
+		}
+
+		for i, test := range given {
+			t.Run(test, func(t *testing.T) {
+				got := font.Render(test)
+				AssertStringEquality(t, got, want[i])
+			})
+		}
+
+	})
+
+	t.Run("3 stars", func(t *testing.T) {
+		given := []string{
+			`***Hi***`,
+			`***i***`,
+			`My Name is ***Ahmad***`,
+			`I am an*** Egyptian Student***`,
+			`****`,
+		}
+
+		want := []string{
+			`<i><b>Hi</b></i>`,
+			`<i><b>i</b></i>`,
+			`My Name is <i><b>Ahmad</b></i>`,
+			`I am an*** Egyptian Student***`,
+			`****`,
+		}
+
+		for i, test := range given {
+			t.Run(test, func(t *testing.T) {
+				got := font.Render(test)
+				AssertStringEquality(t, got, want[i])
+			})
+		}
+
+	})
+
+	t.Run("4 stars", func(t *testing.T) {
+		given := []string{
+			`****Hi****`,
+			`****i****`,
+			`My Name is ****Ahmad****`,
+			`I am an**** Egyptian Student****`,
+			`****`,
+		}
+
+		want := []string{
+			`*<i><b>Hi</b></i>*`,
+			`*<i><b>i</b></i>*`,
+			`My Name is *<i><b>Ahmad</b></i>*`,
+			`I am an**** Egyptian Student****`,
+			`****`,
+		}
+
+		for i, test := range given {
+			t.Run(test, func(t *testing.T) {
+				got := font.Render(test)
+				AssertStringEquality(t, got, want[i])
+			})
+		}
+
+	})
+	t.Run("4 stars", func(t *testing.T) {
+		given := []string{
+			`*****Hi*****`,
+			`*****i*****`,
+			`My Name is *****Ahmad*****`,
+			`I am an***** Egyptian Student*****`,
+			`****`,
+		}
+
+		want := []string{
+			`**<i><b>Hi</b></i>**`,
+			`**<i><b>i</b></i>**`,
+			`My Name is **<i><b>Ahmad</b></i>**`,
+			`I am an***** Egyptian Student*****`,
+			`****`,
+		}
+
+		for i, test := range given {
+			t.Run(test, func(t *testing.T) {
+				got := font.Render(test)
+				AssertStringEquality(t, got, want[i])
+			})
+		}
+
+	})
+}
+
+func AssertStringEquality(t *testing.T, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("\ngot %q\nwant %q", got, want)
+	}
 }
