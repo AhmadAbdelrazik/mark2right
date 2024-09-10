@@ -10,7 +10,7 @@ type HeaderRenderer struct {
 	regex *regexp.Regexp
 }
 
-func NewHeaderRenderer() (IRender, error) {
+func NewHeaderRenderer() (*HeaderRenderer, error) {
 	header := &HeaderRenderer{}
 
 	regex, err := regexp.Compile("^#{1,6} .*")

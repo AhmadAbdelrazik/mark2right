@@ -11,7 +11,7 @@ type ListRenderer struct {
 	unorderedRegex *regexp.Regexp
 }
 
-func NewListRenderer() (IRender, error) {
+func NewListRenderer() (*ListRenderer, error) {
 	list := &ListRenderer{}
 
 	unorderedRegex, err := regexp.Compile(`^(  ){0,5}- `)
@@ -21,7 +21,7 @@ func NewListRenderer() (IRender, error) {
 
 	list.unorderedRegex = unorderedRegex
 
-	orderedRegex, err := regexp.Compile(`^(  ){0,5}\d\. `)
+	orderedRegex, err := regexp.Compile(`^(  ){0,5}\d*\. `)
 	if err != nil {
 		return nil, err
 	}
@@ -33,25 +33,44 @@ func NewListRenderer() (IRender, error) {
 
 func (r *ListRenderer) Render(input string) string {
 	var output string
-	var s Stack
 
 	// Divide the input to lines.
 	for _, line := range strings.Split(input, "\n") {
-
 		// check for a list pattern.
-
-		// ordered list check
 		if loc := r.orderedRegex.FindStringIndex(line); loc != nil {
 			// calculate the line level.
 			level := r.CalculateListLevel(line)
-			if !s.Empty() {
-				output += r.Resolve(s, fmt.Sprintf("ol%d", level))
+			for range level - 1 {
+				output += "<ul>\n"
 			}
 
-			output += "<ol>\n"
-			output += "<li>" + line + "</li>\n"
+			line = strings.TrimSpace(line)
 
-			s.Push(fmt.Sprintf("ol%d", level))
+			// Extract the number
+			number := strings.Split(line, ".")[0]
+
+			output += fmt.Sprintf("<ol start=%q>", number)
+			output += "<li>" + r.CleanseLine(line) + "</li></ol>\n"
+
+			for range level - 1 {
+				output += "</ul>\n"
+			}
+		}
+
+		if loc := r.unorderedRegex.FindStringIndex(line); loc != nil {
+			// calculate the line level.
+			level := r.CalculateListLevel(line)
+			for range level - 1 {
+				output += "<ul>\n"
+			}
+
+			line = strings.TrimSpace(line)
+
+			output += "<ul><li>" + r.CleanseLine(line) + "</li></ul>\n"
+
+			for range level - 1 {
+				output += "</ul>\n"
+			}
 		}
 	}
 
@@ -64,19 +83,10 @@ func (r *ListRenderer) CalculateListLevel(input string) int {
 	return (spaces / 2) + 1
 }
 
-func (r *ListRenderer) Resolve(s Stack, level string) string {
-	var output string
-
-	for !s.Empty() {
-		top, _ := s.Top()
-		s.Pop()
-
-		if top[:2] == level[:2] && top[2] <= level[2] {
-			break
-		}
-
-		output += "</" + top[:2] + ">\n"
-	}
-
-	return output
+// CleanseLine Separate the list mark "1. " or "- " from the line and return
+// the line only
+func (r *ListRenderer) CleanseLine(input string) string {
+	input = strings.TrimSpace(input)
+	words := strings.Split(input, " ")
+	return strings.Join(words[1:], " ")
 }

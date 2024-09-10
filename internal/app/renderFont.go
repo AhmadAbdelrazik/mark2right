@@ -9,7 +9,7 @@ type FontRenderer struct {
 	italicRegex2 *regexp.Regexp
 }
 
-func NewFontRenderer() (IRender, error) {
+func NewFontRenderer() (*FontRenderer, error) {
 	font := &FontRenderer{}
 
 	italicRegex, err := regexp.Compile(`\*([^<* ]|<[^* i]|<i[^* >])[^\n*]*[^ *\n]\*`)
