@@ -11,24 +11,13 @@ type ListRenderer struct {
 	unorderedRegex *regexp.Regexp
 }
 
-func NewListRenderer() (*ListRenderer, error) {
+func NewListRenderer() *ListRenderer {
 	list := &ListRenderer{}
 
-	unorderedRegex, err := regexp.Compile(`^(  ){0,5}- `)
-	if err != nil {
-		return nil, err
-	}
+	list.unorderedRegex = regexp.MustCompile(`^(  ){0,5}- `)
+	list.orderedRegex = regexp.MustCompile(`^(  ){0,5}\d*\. `)
 
-	list.unorderedRegex = unorderedRegex
-
-	orderedRegex, err := regexp.Compile(`^(  ){0,5}\d*\. `)
-	if err != nil {
-		return nil, err
-	}
-
-	list.orderedRegex = orderedRegex
-
-	return list, nil
+	return list
 }
 
 func (r *ListRenderer) Render(input string) string {

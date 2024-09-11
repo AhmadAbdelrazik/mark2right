@@ -9,34 +9,15 @@ type FontRenderer struct {
 	italicRegex2 *regexp.Regexp
 }
 
-func NewFontRenderer() (*FontRenderer, error) {
+func NewFontRenderer() *FontRenderer {
 	font := &FontRenderer{}
 
-	italicRegex, err := regexp.Compile(`\*([^<* ]|<[^* i]|<i[^* >])[^\n*]*[^ *\n]\*`)
-	if err != nil {
-		return nil, err
-	}
-	font.italicRegex = italicRegex
+	font.italicRegex = regexp.MustCompile(`\*([^<* ]|<[^* i]|<i[^* >])[^\n*]*[^ *\n]\*`)
+	font.italicRegex2 = regexp.MustCompile(`\*[^ *\n]\*`)
+	font.boldRegex = regexp.MustCompile(`(^|[^\\])\*{2}([^< *\n]|<[^ b*\n]|<b[^ >*\n])([^\n*]|\\\*)*[^ *\n\\]\*{2}`)
+	font.boldRegex2 = regexp.MustCompile(`\*{2}[^ *\n]\*{2}`)
 
-	italicRegex2, err := regexp.Compile(`\*[^ *\n]\*`)
-	if err != nil {
-		return nil, err
-	}
-	font.italicRegex2 = italicRegex2
-
-	boldRegex, err := regexp.Compile(`(^|[^\\])\*{2}([^< *\n]|<[^ b*\n]|<b[^ >*\n])([^\n*]|\\\*)*[^ *\n\\]\*{2}`)
-	if err != nil {
-		return nil, err
-	}
-	font.boldRegex = boldRegex
-
-	boldRegex2, err := regexp.Compile(`\*{2}[^ *\n]\*{2}`)
-	if err != nil {
-		return nil, err
-	}
-	font.boldRegex2 = boldRegex2
-
-	return font, nil
+	return font
 }
 
 func (r *FontRenderer) Render(input string) string {

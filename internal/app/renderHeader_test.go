@@ -7,10 +7,7 @@ import (
 )
 
 func TestHeader(t *testing.T) {
-	header, err := app.NewHeaderRenderer()
-	if err != nil {
-		t.Fatalf("new header renderer fail, %v", err)
-	}
+	header := app.NewHeaderRenderer()
 	t.Run("Testing Headers", func(t *testing.T) {
 		given := []string{
 			"# Hello",

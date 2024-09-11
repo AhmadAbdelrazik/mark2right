@@ -6,10 +6,7 @@ import (
 )
 
 func TestCalculateLevel(t *testing.T) {
-	list, err := app.NewListRenderer()
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := app.NewListRenderer()
 
 	given := []string{
 		"1. Hi",
@@ -36,10 +33,7 @@ func TestCalculateLevel(t *testing.T) {
 }
 
 func TestCleanseLine(t *testing.T) {
-	list, err := app.NewListRenderer()
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := app.NewListRenderer()
 
 	tests := []struct {
 		name  string
@@ -70,7 +64,7 @@ func TestCleanseLine(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	list, _ := app.NewListRenderer()
+	list := app.NewListRenderer()
 	t.Run("Test bullet points", func(t *testing.T) {
 		tests := []struct {
 			name  string

@@ -6,10 +6,7 @@ import (
 )
 
 func TestFont(t *testing.T) {
-	font, err := app.NewFontRenderer()
-	if err != nil {
-		t.Fatalf("new font renderer fail, %v", err)
-	}
+	font := app.NewFontRenderer()
 
 	t.Run("1 star", func(t *testing.T) {
 		given := []string{
