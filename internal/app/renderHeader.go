@@ -3,38 +3,44 @@ package app
 import (
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 type HeaderRenderer struct {
-	regex *regexp.Regexp
+	headerRegex    *regexp.Regexp
+	startSkipRegex *regexp.Regexp
+	endSkipRegex   *regexp.Regexp
 }
 
 func NewHeaderRenderer() *HeaderRenderer {
 	header := &HeaderRenderer{}
 
-	header.regex = regexp.MustCompile("^#{1,6} .*")
+	header.headerRegex = regexp.MustCompile(`(^|\n)#{1,6} .*`)
 
 	return header
 }
 
 func (r *HeaderRenderer) Render(input string) string {
-	var renderedLines []string
-	for _, line := range strings.Split(input, "\n") {
-		if !r.regex.MatchString(line) {
-			renderedLines = append(renderedLines, line)
-			continue
+	output := input
+
+	for {
+		loc := r.headerRegex.FindStringIndex(output)
+		if loc == nil {
+			break
+		}
+		begin, end := loc[0], loc[1]
+		if output[begin] != '#' {
+			begin++
 		}
 
-		inputs := strings.Split(line, " ")
-		hashes := len(inputs[0])
+		i := 0
+		for output[begin+i] == '#' {
+			i++
+		}
 
-		renderedLine := fmt.Sprintf("<h%d>%s</h%d>", hashes, strings.Join(inputs[1:], " "), hashes)
+		renderedLine := fmt.Sprintf("<h%d>%s</h%d>", i, output[begin+i+1:end], i)
+		output = output[:begin] + renderedLine + output[end:]
 
-		renderedLines = append(renderedLines, renderedLine)
 	}
-
-	output := strings.Join(renderedLines, "\n")
 
 	return output
 }
