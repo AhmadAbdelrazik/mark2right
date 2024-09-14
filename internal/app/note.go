@@ -17,15 +17,15 @@ type Note struct {
 	NoteID    int
 	Note      string
 	CreatedAt time.Time
-	Renderers []IRender
+	Renderers IRender
 	Checker   ILanguageChecker
 }
 
-func NewNote(noteText string, renderers []IRender, checker ILanguageChecker) *Note {
+func NewNote(noteText string, renderer IRender, checker ILanguageChecker) *Note {
 	note := &Note{
 		Note:      noteText,
 		CreatedAt: time.Now(),
-		Renderers: renderers,
+		Renderers: renderer,
 		Checker:   checker,
 	}
 
@@ -33,13 +33,7 @@ func NewNote(noteText string, renderers []IRender, checker ILanguageChecker) *No
 }
 
 func (n *Note) Render() string {
-	output := n.Note
-
-	for _, r := range n.Renderers {
-		output = r.Render(output)
-	}
-
-	return output
+	return n.Renderers.Render(n.Note)
 }
 
 func (n *Note) CheckSpelling() []string {

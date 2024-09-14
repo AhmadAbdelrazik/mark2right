@@ -72,6 +72,11 @@ func TestList(t *testing.T) {
 			want  string
 		}{
 			{
+				name:  "level 0",
+				given: "Hello Ian, Long time no see.",
+				want:  `Hello Ian, Long time no see.`,
+			},
+			{
 				name:  "level 1",
 				given: "- Hello Ian, Long time no see.",
 				want: `<ul><li>Hello Ian, Long time no see.</li></ul>

@@ -34,6 +34,11 @@ func TestCode(t *testing.T) {
 				given: "this is ``var a = 3`` and ``var b = 4``.",
 				want:  "this is <code>var a = 3</code> and <code>var b = 4</code>.",
 			},
+			{
+				name:  "no inline code",
+				given: "this is nothing",
+				want:  "this is nothing",
+			},
 		}
 
 		for _, test := range tests {

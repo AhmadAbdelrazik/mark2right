@@ -44,6 +44,7 @@ func (r *ListRenderer) Render(input string) string {
 			for range level - 1 {
 				output += "</ul>\n"
 			}
+			continue
 		}
 
 		if loc := r.unorderedRegex.FindStringIndex(line); loc != nil {
@@ -60,7 +61,10 @@ func (r *ListRenderer) Render(input string) string {
 			for range level - 1 {
 				output += "</ul>\n"
 			}
+			continue
 		}
+
+		output += line
 	}
 
 	return output

@@ -17,6 +17,7 @@ func TestFont(t *testing.T) {
 			`****`,
 			`Hi!, I am *Ahmad Abdelrazik*
 I am a student at *Suez Canal University*`,
+			"hi",
 		}
 
 		want := []string{
@@ -27,6 +28,7 @@ I am a student at *Suez Canal University*`,
 			`****`,
 			`Hi!, I am <i>Ahmad Abdelrazik</i>
 I am a student at <i>Suez Canal University</i>`,
+			"hi",
 		}
 
 		for i, test := range given {

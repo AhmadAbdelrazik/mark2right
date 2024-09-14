@@ -23,6 +23,11 @@ func TestLinks(t *testing.T) {
 			given: "go to facebook from [here](https://www.facebook.com) or twitter from [here](https://www.x.com)",
 			want:  `go to facebook from <a href="https://www.facebook.com">here</a> or twitter from <a href="https://www.x.com">here</a>`,
 		},
+		{
+			name:  "no Links",
+			given: "go to nowhere",
+			want:  `go to nowhere`,
+		},
 	}
 
 	for _, test := range tests {

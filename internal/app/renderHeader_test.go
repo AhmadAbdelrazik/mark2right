@@ -51,6 +51,7 @@ func TestHeader(t *testing.T) {
 			"I am an Egyptian",
 			"###_## I am a computer Engineer",
 			"####### #EngineerRule",
+			"Hi",
 		}
 
 		want := []string{
@@ -60,6 +61,7 @@ func TestHeader(t *testing.T) {
 			"I am an Egyptian",
 			"###_## I am a computer Engineer",
 			"####### #EngineerRule",
+			"Hi",
 		}
 
 		for i, test := range given {
