@@ -1,12 +1,12 @@
-package app_test
+package data_test
 
 import (
-	"AhmadAbdelrazik/mark2right/internal/app"
+	"AhmadAbdelrazik/mark2right/internal/data"
 	"testing"
 )
 
 func TestChecker(t *testing.T) {
-	checker := app.NewChecker()
+	checker := data.NewChecker()
 
 	t.Run("Valid note", func(t *testing.T) {
 		given := `Hello, My Name is Ahmad. I am 22 years old.`
