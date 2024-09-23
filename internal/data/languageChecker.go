@@ -3,43 +3,22 @@ package data
 import (
 	_ "embed"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 )
 
 //go:embed words.txt
-var words string
+var dictionaryWords string
 
 //go:embed names.txt
-var names string
+var dictionaryNames string
 
-type ILanguageChecker interface {
-	CheckSpelling(string) []string
-}
+var (
+	allWords = strings.Split(dictionaryWords, "\n")
+	allNames = strings.Split(dictionaryNames, "\n")
+)
 
-type Checker struct {
-	words []string
-	names []string
-}
-
-func NewChecker() ILanguageChecker {
-	checker := &Checker{}
-	checker.words = strings.Split(strings.ToLower(words), "\n")
-	checker.names = strings.Split(strings.ToLower(names), "\n")
-
-	sort.Slice(checker.words, func(i, j int) bool {
-		return checker.words[i] < checker.words[j]
-	})
-
-	sort.Slice(checker.names, func(i, j int) bool {
-		return checker.words[i] < checker.words[j]
-	})
-
-	return checker
-}
-
-func (c *Checker) CheckSpelling(input string) []string {
+func CheckSpelling(input string) []string {
 	// Get each word out
 	words := strings.Split(input, " ")
 
@@ -59,14 +38,14 @@ func (c *Checker) CheckSpelling(input string) []string {
 			continue
 		}
 
-		if !c.search(w) {
+		if !search(w) {
 			badWords = append(badWords, w)
 		}
 	}
 	return badWords
 }
 
-func (c *Checker) search(word string) bool {
+func search(word string) bool {
 	word = strings.ToLower(word)
 	// Check if it's a number
 	if _, err := strconv.Atoi(word); err == nil {
@@ -74,12 +53,12 @@ func (c *Checker) search(word string) bool {
 	}
 
 	// check if it's a name
-	if isName, _ := binarySearch(word, c.names); isName {
+	if isName, _ := binarySearch(word, allNames); isName {
 		return true
 	}
 
 	// i : 182744, is : 198014
-	if isWord, _ := binarySearch(word, c.words); isWord {
+	if isWord, _ := binarySearch(word, allWords); isWord {
 		return true
 	}
 

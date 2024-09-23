@@ -6,45 +6,51 @@ import (
 	"strings"
 )
 
-type IRender interface {
-	Render(string) string
+var (
+	// Code Block Regex
+	multiLineOpenRegex  = regexp.MustCompile("^```")
+	multiLineCloseRegex = regexp.MustCompile("^```$")
+
+	// Inline Code regex
+	inlineOneTickRegex = regexp.MustCompile(`(^|[^\\\x60])\x60[^\x60]*\x60`)
+	inlineTwoTickRegex = regexp.MustCompile(`(^|[^\\\x60])\x60{2}[^\x60]*\x60{2}`)
+
+	linkRegex   = regexp.MustCompile(`(^|[^\\])\[[^\n\]]*\]\([^\)\n]*\)`)
+	headerRegex = regexp.MustCompile(`(^|\n)#{1,6} .*`)
+
+	// list regex
+	unorderedRegex = regexp.MustCompile(`^(  ){0,5}- `)
+	orderedRegex   = regexp.MustCompile(`^(  ){0,5}\d*\. `)
+
+	// font regex
+	italicRegex  = regexp.MustCompile(`\*([^<* ]|<[^* i]|<i[^* >])[^\n*]*[^ *\n]\*`)
+	italicRegex2 = regexp.MustCompile(`\*[^ *\n]\*`)
+	boldRegex    = regexp.MustCompile(`(^|[^\\])\*{2}([^< *\n]|<[^ b*\n]|<b[^ >*\n])([^\n*]|\\\*)*[^ *\n\\]\*{2}`)
+	boldRegex2   = regexp.MustCompile(`\*{2}[^ *\n]\*{2}`)
+)
+
+func renderers() []func(string) string {
+	var renders []func(string) string
+
+	renders = append(renders, RenderCode)
+	renders = append(renders, RenderLink)
+	renders = append(renders, RenderList)
+	renders = append(renders, RenderHeader)
+	renders = append(renders, RenderFont)
+
+	return renders
 }
 
-type Renderer struct {
-	renderers           []IRender
-	multiLineOpenRegex  *regexp.Regexp
-	multiLineCloseRegex *regexp.Regexp
-}
-
-func NewRenderer() *Renderer {
-	r := &Renderer{}
-
-	hr := NewHeaderRenderer()
-	fr := NewFontRenderer()
-	lr := NewListRenderer()
-	cr := NewCodeRenderer()
-	llr := NewLinkRenderer()
-
-	r.renderers = append(r.renderers, hr)
-	r.renderers = append(r.renderers, fr)
-	r.renderers = append(r.renderers, lr)
-	r.renderers = append(r.renderers, cr)
-	r.renderers = append(r.renderers, llr)
-
-	r.multiLineOpenRegex = regexp.MustCompile("^```")
-	r.multiLineCloseRegex = regexp.MustCompile("^```$")
-
-	return r
-}
-
-func (r *Renderer) Render(input string) string {
+func Render(input string) string {
 	var outputs []string
 	multiLineActive := false
+
+	renderers := renderers()
 
 	for _, line := range strings.Split(input, "\n") {
 		// If the multi line closing pattern appears, close the
 		// multiline code block.
-		if r.multiLineCloseRegex.MatchString(line) && multiLineActive {
+		if multiLineCloseRegex.MatchString(line) && multiLineActive {
 			multiLineActive = false
 			outputs = append(outputs, "</code>")
 			continue
@@ -57,7 +63,7 @@ func (r *Renderer) Render(input string) string {
 		}
 
 		// if multiline opening is found, start a multi line code block
-		if r.multiLineOpenRegex.MatchString(line) {
+		if multiLineOpenRegex.MatchString(line) {
 			multiLineActive = true
 
 			outputs = append(outputs, "<code>")
@@ -67,8 +73,8 @@ func (r *Renderer) Render(input string) string {
 			continue
 		}
 
-		for _, rend := range r.renderers {
-			line = rend.Render(line)
+		for _, rend := range renderers {
+			line = rend(line)
 		}
 
 		outputs = append(outputs, line)
@@ -78,55 +84,13 @@ func (r *Renderer) Render(input string) string {
 
 }
 
-type CodeRenderer struct {
-	inlineOneTickRegex  *regexp.Regexp
-	inlineTwoTickRegex  *regexp.Regexp
-	multiLineOpenRegex  *regexp.Regexp
-	multiLineCloseRegex *regexp.Regexp
-}
-
-func NewCodeRenderer() *CodeRenderer {
-	r := &CodeRenderer{}
-
-	r.inlineOneTickRegex = regexp.MustCompile(`(^|[^\\\x60])\x60[^\x60]*\x60`)
-	r.inlineTwoTickRegex = regexp.MustCompile(`(^|[^\\\x60])\x60{2}[^\x60]*\x60{2}`)
-	r.multiLineOpenRegex = regexp.MustCompile("^```")
-	r.multiLineCloseRegex = regexp.MustCompile("^```$")
-
-	return r
-}
-
-func (r *CodeRenderer) Render(input string) string {
+func RenderCode(input string) string {
 	var output string
-	multiLineActive := false
 
 	for _, line := range strings.Split(input, "\n") {
-		// If the multi line closing pattern appears, close the
-		// multiline code block.
-		if r.multiLineCloseRegex.MatchString(line) && multiLineActive {
-			multiLineActive = false
-			output += "</code>"
-			continue
-		}
-
-		// while multiline active, no styling is done inside.
-		if multiLineActive {
-			output += line + "\n"
-			continue
-		}
-
-		// if multiline opening is found, start a multi line code block
-		if r.multiLineOpenRegex.MatchString(line) {
-			multiLineActive = true
-
-			output += "<code>\n"
-			output += line[3:]
-			continue
-		}
-
 		// Looping on the line until there is no inline code blocks
 		for {
-			loc := r.inlineTwoTickRegex.FindStringIndex(line)
+			loc := inlineTwoTickRegex.FindStringIndex(line)
 			if loc == nil {
 				break
 			}
@@ -142,7 +106,7 @@ func (r *CodeRenderer) Render(input string) string {
 
 		// Looping on the line until there is no inline code blocks
 		for {
-			loc := r.inlineOneTickRegex.FindStringIndex(line)
+			loc := inlineOneTickRegex.FindStringIndex(line)
 			if loc == nil {
 				break
 			}
@@ -162,23 +126,11 @@ func (r *CodeRenderer) Render(input string) string {
 	return output
 }
 
-type LinkRenderer struct {
-	regex *regexp.Regexp
-}
-
-func NewLinkRenderer() *LinkRenderer {
-	r := &LinkRenderer{}
-
-	r.regex = regexp.MustCompile(`(^|[^\\])\[[^\n\]]*\]\([^\)\n]*\)`)
-
-	return r
-}
-
-func (r *LinkRenderer) Render(input string) string {
+func RenderLink(input string) string {
 	output := input
 
 	for {
-		loc := r.regex.FindStringIndex(output)
+		loc := linkRegex.FindStringIndex(output)
 		if loc == nil {
 			break
 		}
@@ -209,29 +161,27 @@ func (r *LinkRenderer) Render(input string) string {
 	return output
 }
 
-type ListRenderer struct {
-	orderedRegex   *regexp.Regexp
-	unorderedRegex *regexp.Regexp
-}
-
-func NewListRenderer() *ListRenderer {
-	list := &ListRenderer{}
-
-	list.unorderedRegex = regexp.MustCompile(`^(  ){0,5}- `)
-	list.orderedRegex = regexp.MustCompile(`^(  ){0,5}\d*\. `)
-
-	return list
-}
-
-func (r *ListRenderer) Render(input string) string {
+func RenderList(input string) string {
 	var output string
+
+	calculateListLevel := func(input string) int {
+		trimmedInput := strings.TrimLeft(input, " ")
+		spaces := len(input) - len(trimmedInput)
+		return (spaces / 2) + 1
+	}
+
+	cleanseLine := func(input string) string {
+		input = strings.TrimSpace(input)
+		words := strings.Split(input, " ")
+		return strings.Join(words[1:], " ")
+	}
 
 	// Divide the input to lines.
 	for _, line := range strings.Split(input, "\n") {
 		// check for a list pattern.
-		if loc := r.orderedRegex.FindStringIndex(line); loc != nil {
+		if loc := orderedRegex.FindStringIndex(line); loc != nil {
 			// calculate the line level.
-			level := r.CalculateListLevel(line)
+			level := calculateListLevel(line)
 			for range level - 1 {
 				output += "<ul>\n"
 			}
@@ -242,7 +192,7 @@ func (r *ListRenderer) Render(input string) string {
 			number := strings.Split(line, ".")[0]
 
 			output += fmt.Sprintf("<ol start=%q>", number)
-			output += "<li>" + r.CleanseLine(line) + "</li></ol>\n"
+			output += "<li>" + cleanseLine(line) + "</li></ol>\n"
 
 			for range level - 1 {
 				output += "</ul>\n"
@@ -250,16 +200,16 @@ func (r *ListRenderer) Render(input string) string {
 			continue
 		}
 
-		if loc := r.unorderedRegex.FindStringIndex(line); loc != nil {
+		if loc := unorderedRegex.FindStringIndex(line); loc != nil {
 			// calculate the line level.
-			level := r.CalculateListLevel(line)
+			level := calculateListLevel(line)
 			for range level - 1 {
 				output += "<ul>\n"
 			}
 
 			line = strings.TrimSpace(line)
 
-			output += "<ul><li>" + r.CleanseLine(line) + "</li></ul>\n"
+			output += "<ul><li>" + cleanseLine(line) + "</li></ul>\n"
 
 			for range level - 1 {
 				output += "</ul>\n"
@@ -270,42 +220,14 @@ func (r *ListRenderer) Render(input string) string {
 		output += line
 	}
 
-	return output
+	return strings.TrimSuffix(output, "\n")
 }
 
-func (r *ListRenderer) CalculateListLevel(input string) int {
-	trimmedInput := strings.TrimLeft(input, " ")
-	spaces := len(input) - len(trimmedInput)
-	return (spaces / 2) + 1
-}
-
-// CleanseLine Separate the list mark "1. " or "- " from the line and return
-// the line only
-func (r *ListRenderer) CleanseLine(input string) string {
-	input = strings.TrimSpace(input)
-	words := strings.Split(input, " ")
-	return strings.Join(words[1:], " ")
-}
-
-type HeaderRenderer struct {
-	headerRegex    *regexp.Regexp
-	startSkipRegex *regexp.Regexp
-	endSkipRegex   *regexp.Regexp
-}
-
-func NewHeaderRenderer() *HeaderRenderer {
-	header := &HeaderRenderer{}
-
-	header.headerRegex = regexp.MustCompile(`(^|\n)#{1,6} .*`)
-
-	return header
-}
-
-func (r *HeaderRenderer) Render(input string) string {
+func RenderHeader(input string) string {
 	output := input
 
 	for {
-		loc := r.headerRegex.FindStringIndex(output)
+		loc := headerRegex.FindStringIndex(output)
 		if loc == nil {
 			break
 		}
@@ -327,29 +249,11 @@ func (r *HeaderRenderer) Render(input string) string {
 	return output
 }
 
-type FontRenderer struct {
-	boldRegex    *regexp.Regexp
-	boldRegex2   *regexp.Regexp
-	italicRegex  *regexp.Regexp
-	italicRegex2 *regexp.Regexp
-}
-
-func NewFontRenderer() *FontRenderer {
-	font := &FontRenderer{}
-
-	font.italicRegex = regexp.MustCompile(`\*([^<* ]|<[^* i]|<i[^* >])[^\n*]*[^ *\n]\*`)
-	font.italicRegex2 = regexp.MustCompile(`\*[^ *\n]\*`)
-	font.boldRegex = regexp.MustCompile(`(^|[^\\])\*{2}([^< *\n]|<[^ b*\n]|<b[^ >*\n])([^\n*]|\\\*)*[^ *\n\\]\*{2}`)
-	font.boldRegex2 = regexp.MustCompile(`\*{2}[^ *\n]\*{2}`)
-
-	return font
-}
-
-func (r *FontRenderer) Render(input string) string {
+func RenderFont(input string) string {
 	output := input
 
 	for {
-		loc := r.boldRegex.FindStringIndex(output)
+		loc := boldRegex.FindStringIndex(output)
 		if loc == nil {
 			break
 		}
@@ -362,7 +266,7 @@ func (r *FontRenderer) Render(input string) string {
 	}
 
 	for {
-		loc := r.boldRegex2.FindStringIndex(output)
+		loc := boldRegex2.FindStringIndex(output)
 		if loc == nil {
 			break
 		}
@@ -372,7 +276,7 @@ func (r *FontRenderer) Render(input string) string {
 	}
 
 	for {
-		loc := r.italicRegex.FindStringIndex(output)
+		loc := italicRegex.FindStringIndex(output)
 		if loc == nil {
 			break
 		}
@@ -382,7 +286,7 @@ func (r *FontRenderer) Render(input string) string {
 	}
 
 	for {
-		loc := r.italicRegex2.FindStringIndex(output)
+		loc := italicRegex2.FindStringIndex(output)
 		if loc == nil {
 			break
 		}

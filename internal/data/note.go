@@ -2,6 +2,7 @@ package data
 
 import (
 	"AhmadAbdelrazik/mark2right/internal/data/validator"
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -21,14 +22,6 @@ func ValidateNote(v *validator.Validator, note *Note) {
 	v.Check(len(note.Note) <= 10_000, "note", "maximum length of note is 10,000 bytes")
 }
 
-func (n *Note) Render(renderer IRender) string {
-	return renderer.Render(n.Note)
-}
-
-func (n *Note) CheckSpelling(checker ILanguageChecker) []string {
-	return checker.CheckSpelling(n.Note)
-}
-
 type NoteModel struct {
 	DB *sql.DB
 }
@@ -38,8 +31,10 @@ func (n *NoteModel) Insert(note *Note) error {
 	INSERT INTO notes (note, created_at)
 	VALUES ($1, $2)
 	RETURINING note_id`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	return n.DB.QueryRow(query, note.Note, note.CreatedAt).Scan(&note.NoteID)
+	return n.DB.QueryRowContext(ctx, query, note.Note, note.CreatedAt).Scan(&note.NoteID)
 }
 
 func (n *NoteModel) Get(id int64) (*Note, error) {
@@ -51,7 +46,10 @@ func (n *NoteModel) Get(id int64) (*Note, error) {
 		NoteID: id,
 	}
 
-	err := n.DB.QueryRow(query, id).Scan(&note.Note, &note.CreatedAt)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := n.DB.QueryRowContext(ctx, query, id).Scan(&note.Note, &note.CreatedAt)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -65,9 +63,49 @@ func (n *NoteModel) Get(id int64) (*Note, error) {
 }
 
 func (n *NoteModel) Update(note *Note) error {
+	query := `
+	UPDATE notes
+	SET note = $1, version = version + 1
+	WHERE note_id = $2 AND version = $3
+	RETURNING version`
+	args := []interface{}{note.Note, note.NoteID, note.Version}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := n.DB.QueryRowContext(ctx, query, args...).Scan(&note.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (n *NoteModel) Delete(id int64) error {
+	query := `
+	DELETE FROM notes
+	WHERE note_id = $1
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := n.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNoRecord
+	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package main
 
+import (
+	_ "embed"
+)
+
 func main() {
-	// renders := app.NewRenderer()
-	// checker := app.NewChecker()
 }

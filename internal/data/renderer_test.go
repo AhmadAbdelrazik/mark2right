@@ -7,15 +7,13 @@ import (
 )
 
 func TestRenderer(t *testing.T) {
-	r := data.NewRenderer()
-
 	tests := []struct {
 		name  string
 		given string
 		want  string
 	}{
 		{
-			name: "Simple Test with endline",
+			name: "Simple Test",
 			given: `# Hello World
 This is really good.
 - I like bullet points.
@@ -62,7 +60,7 @@ go mod tidy
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := r.Render(test.given)
+			got := data.Render(test.given)
 			if got != test.want {
 				t.Fatalf("\ngot:  %q\nwant: %q", got, test.want)
 			}
@@ -71,8 +69,6 @@ go mod tidy
 }
 
 func TestCode(t *testing.T) {
-	codeRenderer := data.NewCodeRenderer()
-
 	t.Run("Test Inline Code Rendering", func(t *testing.T) {
 		tests := []struct {
 			name  string
@@ -108,42 +104,16 @@ func TestCode(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				got := codeRenderer.Render(test.given)
+				got := data.RenderCode(test.given)
 				if got != test.want {
 					t.Fatalf("\ngot:  %q\nwant: %q", got, test.want)
 				}
 			})
 		}
-	})
-
-	t.Run("Test Multiline Code Rendering", func(t *testing.T) {
-		tests := []struct {
-			name  string
-			given string
-			want  string
-		}{
-			{
-				name:  "Simple Inline",
-				given: "```\nHello World\nthis is actually awesome\n```",
-				want:  "<code>\nHello World\nthis is actually awesome\n</code>",
-			},
-		}
-
-		for _, test := range tests {
-			t.Run(test.name, func(t *testing.T) {
-				got := codeRenderer.Render(test.given)
-				if got != test.want {
-					t.Fatalf("\ngot:  %q\nwant: %q", got, test.want)
-				}
-			})
-		}
-
 	})
 }
 
 func TestFont(t *testing.T) {
-	font := data.NewFontRenderer()
-
 	t.Run("1 star", func(t *testing.T) {
 		given := []string{
 			`*Hi*`,
@@ -169,7 +139,7 @@ I am a student at <i>Suez Canal University</i>`,
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := font.Render(test)
+				got := data.RenderFont(test)
 				AssertStringEquality(t, got, want[i])
 			})
 		}
@@ -195,7 +165,7 @@ I am a student at <i>Suez Canal University</i>`,
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := font.Render(test)
+				got := data.RenderFont(test)
 				AssertStringEquality(t, got, want[i])
 			})
 		}
@@ -221,7 +191,7 @@ I am a student at <i>Suez Canal University</i>`,
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := font.Render(test)
+				got := data.RenderFont(test)
 				AssertStringEquality(t, got, want[i])
 			})
 		}
@@ -247,7 +217,7 @@ I am a student at <i>Suez Canal University</i>`,
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := font.Render(test)
+				got := data.RenderFont(test)
 				AssertStringEquality(t, got, want[i])
 			})
 		}
@@ -272,7 +242,7 @@ I am a student at <i>Suez Canal University</i>`,
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := font.Render(test)
+				got := data.RenderFont(test)
 				AssertStringEquality(t, got, want[i])
 			})
 		}
@@ -288,7 +258,6 @@ func AssertStringEquality(t *testing.T, got, want string) {
 }
 
 func TestHeader(t *testing.T) {
-	header := data.NewHeaderRenderer()
 	t.Run("Testing Headers", func(t *testing.T) {
 		given := []string{
 			"# Hello",
@@ -316,7 +285,7 @@ func TestHeader(t *testing.T) {
 
 		for i, test := range given {
 			t.Run(fmt.Sprintf("%d hashtags", i+1), func(t *testing.T) {
-				got := header.Render(test)
+				got := data.RenderHeader(test)
 				if got != want[i] {
 					t.Fatalf("got %q, want %q", got, want[i])
 				}
@@ -347,7 +316,7 @@ func TestHeader(t *testing.T) {
 
 		for i, test := range given {
 			t.Run(test, func(t *testing.T) {
-				got := header.Render(test)
+				got := data.RenderHeader(test)
 				if got != want[i] {
 					t.Fatalf("got %q, want %q", got, want[i])
 				}
@@ -358,7 +327,6 @@ func TestHeader(t *testing.T) {
 }
 
 func TestLinks(t *testing.T) {
-	linkRenderer := data.NewLinkRenderer()
 
 	tests := []struct {
 		name  string
@@ -384,7 +352,7 @@ func TestLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := linkRenderer.Render(test.given)
+			got := data.RenderLink(test.given)
 			if got != test.want {
 				t.Fatalf("\ngot:  %q\nwant: %q", got, test.want)
 			}
@@ -392,66 +360,7 @@ func TestLinks(t *testing.T) {
 	}
 }
 
-func TestCalculateLevel(t *testing.T) {
-	list := data.NewListRenderer()
-
-	given := []string{
-		"1. Hi",
-		"3. Hi",
-		"  - Hi",
-		"    - Hi",
-		"  1. Hi",
-	}
-
-	want := []int{
-		1,
-		1,
-		2,
-		3,
-		2,
-	}
-
-	for i, test := range given {
-		t.Run(test, func(t *testing.T) {
-			got := list.CalculateListLevel(test)
-			AssertEquality(t, got, want[i])
-		})
-	}
-}
-
-func TestCleanseLine(t *testing.T) {
-	list := data.NewListRenderer()
-
-	tests := []struct {
-		name  string
-		given string
-		want  string
-	}{
-		{
-			name:  "level 1",
-			given: "1. Hello Ian Long time no see!",
-			want:  "Hello Ian Long time no see!",
-		},
-		{
-			name:  "level 2",
-			given: "  - First Important Point.",
-			want:  "First Important Point.",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := list.CleanseLine(test.given)
-
-			if got != test.want {
-				t.Fatalf("\ngot %q\nwant %q", got, test.want)
-			}
-		})
-	}
-}
-
 func TestList(t *testing.T) {
-	list := data.NewListRenderer()
 	t.Run("Test bullet points", func(t *testing.T) {
 		tests := []struct {
 			name  string
@@ -466,16 +375,14 @@ func TestList(t *testing.T) {
 			{
 				name:  "level 1",
 				given: "- Hello Ian, Long time no see.",
-				want: `<ul><li>Hello Ian, Long time no see.</li></ul>
-`,
+				want:  `<ul><li>Hello Ian, Long time no see.</li></ul>`,
 			},
 			{
 				name:  "level 2",
 				given: "  - Hello Ian, Long time no see.",
 				want: `<ul>
 <ul><li>Hello Ian, Long time no see.</li></ul>
-</ul>
-`,
+</ul>`,
 			},
 			{
 				name: "level 3",
@@ -492,14 +399,13 @@ func TestList(t *testing.T) {
 </ul>
 <ul>
 <ul><li>Improved Performance</li></ul>
-</ul>
-`,
+</ul>`,
 			},
 		}
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				got := list.Render(test.given)
+				got := data.RenderList(test.given)
 				if got != test.want {
 					t.Fatalf("\ngot %q\nwant %q", got, test.want)
 				}
@@ -516,18 +422,18 @@ func TestList(t *testing.T) {
 			{
 				name:  "level 1",
 				given: "1. Hello Ian, Long time no see.",
-				want:  "<ol start=\"1\"><li>Hello Ian, Long time no see.</li></ol>\n",
+				want:  "<ol start=\"1\"><li>Hello Ian, Long time no see.</li></ol>",
 			},
 			{
 				name:  "level 2",
 				given: "  1. Hello Ian, Long time no see.",
-				want:  "<ul>\n<ol start=\"1\"><li>Hello Ian, Long time no see.</li></ol>\n</ul>\n",
+				want:  "<ul>\n<ol start=\"1\"><li>Hello Ian, Long time no see.</li></ol>\n</ul>",
 			},
 		}
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				got := list.Render(test.given)
+				got := data.RenderList(test.given)
 				if got != test.want {
 					t.Fatalf("\ngot %q\nwant %q", got, test.want)
 				}
