@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"sync"
 
 	_ "github.com/lib/pq"
 )
@@ -23,6 +24,7 @@ type application struct {
 	models      *note.Models
 	errorLogger *log.Logger
 	infoLogger  *log.Logger
+	wg          sync.WaitGroup
 }
 
 func main() {
@@ -31,7 +33,7 @@ func main() {
 	flag.StringVar(&cfg.env, "environment", "development", "Environment{development - testing - production}")
 	flag.IntVar(&cfg.port, "port", 4000, "Port Number")
 
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "Database DNS")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("MARK2RIGHT_DB_DSN"), "Database DNS")
 
 	flag.Parse()
 

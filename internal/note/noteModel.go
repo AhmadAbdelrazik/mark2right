@@ -25,7 +25,7 @@ func (n *NoteModel) Insert(note *Note) error {
 func (n *NoteModel) Get(id int64) (*Note, error) {
 	query := `
 	SELECT note, created_at FROM notes
-	WHERE id = $1`
+	WHERE note_id = $1`
 
 	note := &Note{
 		NoteID: id,
